@@ -1,0 +1,41 @@
+using System.ComponentModel;
+
+public enum Enum_RouteKeyOrQueueName
+{
+    [EnumQueueAttribute(
+        "notification.all.queue",
+        Enum_RabbitMQExchanges.NotificationExchange,
+        "",
+        "x-match",
+        "all",
+        "notificationType",
+        "all")]
+    EmailNotificationAllQueue,
+    [EnumQueueAttribute(
+        "notification.all.email",
+        Enum_RabbitMQExchanges.NotificationExchange,
+        "",
+        "x-match",
+        "all",
+        "notificationType",
+        "email")]
+    EmailNotificationAllEmail,
+    [EnumQueueAttribute(
+        "notification.all.mobile",
+        Enum_RabbitMQExchanges.NotificationExchange,
+        "",
+        "x-match",
+        "all",
+        "notificationType",
+        "mobile")]
+    EmailNotificationAllMobile,
+    [EnumQueueAttribute(
+        "notification.all.sms",
+        Enum_RabbitMQExchanges.NotificationExchange,
+        "",
+        "x-match",
+        "all",
+        "notificationType",
+        "sms")]
+    EmailNotificationAllSms
+}
