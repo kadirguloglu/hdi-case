@@ -1,44 +1,56 @@
-var builder = WebApplication.CreateBuilder(args);
+using Humanizer;
+using Serilog;
+using Serilog.Events;
 
-// Add services to the container.
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
-
-var app = builder.Build();
-
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
+namespace HdiCase.RestApi
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+    public class Program
+    {
+        private static readonly string RouteKey = Enum_RoutingKeys.Api.ToString().Underscore();
+        public static void Main(string[] args)
+        {
+            try
+            {
+                Log.Logger = new LoggerConfiguration()
+                    .Filter.ByExcluding(c =>
+                    {
+                        return IgnoredExceptions.Ignore(c);
+                    })
+                    .WriteTo.Seq(EnvironmentSettings.SeqHost)
+                    .MinimumLevel.Information()
+                    .MinimumLevel.Override("Microsoft.AspNetCore", LogEventLevel.Warning)
+                    .Enrich.WithProperty("Service Name", RouteKey)
+                    .Enrich.WithProperty("Environment", EnvironmentSettings.ASPNETCORE_ENVIRONMENT)
+                    .CreateLogger();
+                Log.Information("Starting web host = " + RouteKey);
+                CreateHostBuilder(args).Build().Run();
 
-app.UseHttpsRedirection();
+            }
+            catch (Exception ex)
+            {
+                Log.Fatal(ex, "Host terminated unexpectedly = " + RouteKey);
+            }
+            finally
+            {
+                Log.CloseAndFlush();
+            }
+        }
 
-var summaries = new[]
-{
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
+        public static IHostBuilder CreateHostBuilder(string[] args) =>
+            Host.CreateDefaultBuilder(args)
+                .ConfigureWebHostDefaults(webBuilder =>
+                {
+                    webBuilder.ConfigureKestrel(serverOptions =>
+                    {
+                        serverOptions.ListenAnyIP(7050, listenOptions =>
+                                            listenOptions.Protocols = Microsoft.AspNetCore.Server.Kestrel.Core.HttpProtocols.Http1);
 
-app.MapGet("/weatherforecast", () =>
-{
-    var forecast =  Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-})
-.WithName("GetWeatherForecast")
-.WithOpenApi();
-
-app.Run();
-
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
+                        // http2 grpc port
+                        serverOptions.ListenAnyIP(7060, listenOptions =>
+                            listenOptions.Protocols = Microsoft.AspNetCore.Server.Kestrel.Core.HttpProtocols.Http2);
+                    });
+                    webBuilder.UseStartup<Startup>();
+                })
+                .UseSerilog();
+    }
 }

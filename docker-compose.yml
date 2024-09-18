@@ -1,0 +1,86 @@
+version: "3.5"
+name: hdi-services
+services:
+  hdi-redis-host:
+    container_name: "hdi-redis-host"
+    image: redis:latest
+    # ports:
+    #   - "6379:6379"
+    command: /bin/sh -c "redis-server --requirepass guest"
+    networks:
+      - hdi-local-network
+
+  hdi-rabbitmq-host:
+    container_name: "hdi-rabbitmq-host"
+    image: rabbitmq:3.9.29-management
+    ports:
+      - "5673:5672"
+      - "15673:15672"
+    environment:
+      - RABBITMQ_DEFAULT_USER=guest
+      - RABBITMQ_DEFAULT_PASS=guest
+    networks:
+      - hdi-local-network
+
+  hdi-seq-host:
+    container_name: "hdi-seq-host"
+    image: datalust/seq
+    ports:
+      - "5343:80"
+    environment:
+      - ACCEPT_EULA=Y
+      - SEQ_FIRSTRUN_ADMINPASSWORDHASH=QBYLRt7yAKkXAejplNAM0+PnlmYUvvG6dRObK7ERU7npW5beZdfHyNUwlBGOEZsLLyiISKHheyqtcwq2IiTG/7sUjrfc89Xavvydt9aJ7CG4
+    networks:
+      - hdi-local-network
+    volumes:
+      - hdi-volume:/app
+
+  hdi-mssql-host:
+    container_name: "hdi-mssql-host"
+    image: mcr.microsoft.com/azure-sql-edge
+    ports:
+      - "1433:1433"
+    environment:
+      - ACCEPT_EULA=1
+      - MSSQL_SA_PASSWORD=Aa1234!!
+      - MSSQL_PID=Developer
+    networks:
+      - hdi-local-network
+
+  hdi-api:
+    container_name: "hdi-api"
+    build:
+      context: .
+      dockerfile: ./Dockerfile.dev
+      args:
+        - configuration=Debug
+    ports:
+      - "7050:7050"
+      - "7060:7060"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - MSSQL_CONNECTION_STRING=Server=hdi-mssql-host;Database=hdicase;User=sa;Password=Aa1234!!;TrustServerCertificate=True;Max Pool Size=2000;
+      - REDIS_HOST=hdi-redis-host
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=guest
+      - RABBITMQ_HOST=hdi-rabbitmq-host
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USERNAME=guest
+      - RABBITMQ_PASSWORD=guest
+      - SEQ_HOST=http://hdi-seq-host:5341
+      - SEQ_USERNAME=admin
+      - SEQ_PASSWORD=admin
+      - LOGGING_IS_ENABLED=true
+      - DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1
+    volumes:
+      - ~/.vsdbg:/remote_debugger:rw
+      - hdi-volume:/app/wwwroot
+    networks:
+      - hdi-local-network 
+
+volumes:
+  hdi-volume:
+
+networks:
+  hdi-local-network:
+    driver: bridge

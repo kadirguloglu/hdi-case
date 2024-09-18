@@ -1,8 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.OpenApi.Models;
 using Microsoft.AspNetCore.Mvc;
-using Swashbuckle.AspNetCore.SwaggerGen;
-using System.Reflection;
 
 public static class InitSwagger
 {
@@ -18,16 +16,6 @@ public static class InitSwagger
             });
             service.AddSwaggerGen(c =>
             {
-                c.SwaggerDoc("Api-v1", new OpenApiInfo
-                {
-                    Title = "",
-                    Version = "v1",
-                    Description = "",
-                    Contact = new OpenApiContact
-                    {
-                        Name = "."
-                    },
-                });
                 c.SwaggerDoc("Api-v1", new OpenApiInfo
                 {
                     Title = "",

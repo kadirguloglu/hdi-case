@@ -7,6 +7,8 @@ public static class EnvironmentSettings
     public static string ASPNETCORE_ENVIRONMENT => GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT", "Development");
     [Description("IsDevelopment")]
     public static bool IsDevelopment => ASPNETCORE_ENVIRONMENT == "Development";
+    [Description("MSSQL_CONNECTION_STRING")]
+    public static string MssqlConnectionString => GetEnvironmentVariable("MSSQL_CONNECTION_STRING", "Server=localhost;Database=hdicase;User=sa;Password=Aa1234!!;TrustServerCertificate=True;Max Pool Size=2000;");
     [Description("REDIS_HOST")]
     public static string RedisHost => GetEnvironmentVariable("REDIS_HOST", "localhost");
     [Description("REDIS_PORT")]
@@ -31,16 +33,6 @@ public static class EnvironmentSettings
     public static int JWTExpiresIn => Convert.ToInt32(GetEnvironmentVariable("JWT_EXPIRES_IN", "43200"));
     [Description("JWT_REFRESH_TOKEN_EXPIRES_IN")]
     public static int JWTRefreshTokenExpiresIn => Convert.ToInt32(GetEnvironmentVariable("JWT_REFRESH_TOKEN_EXPIRES_IN", "43100"));
-    [Description("JWT_VALID_ISSUER")]
-    public static string JWTAdminValidIssuer => GetEnvironmentVariable("JWT_VALID_ISSUER", "https://localhost:7253");
-    [Description("JWT_VALID_AUDIENCE")]
-    public static string JWTAdminValidAudience => GetEnvironmentVariable("JWT_VALID_AUDIENCE", "https://localhost:7253");
-    [Description("JWT_VALID_AUDIENCE")]
-    public static string JWTAdminSecret => GetEnvironmentVariable("JWT_VALID_AUDIENCE", "JWTAuthenticationHIGHsecuredPasswordVVVp1OH7Xzyr112233");
-    [Description("JWT_ADMIN_EXPIRES_IN")]
-    public static int JWTAdminExpiresIn => Convert.ToInt32(GetEnvironmentVariable("JWT_ADMIN_EXPIRES_IN", "3200"));
-    [Description("JWT_ADMIN_REFRESH_TOKEN_EXPIRES_IN")]
-    public static int JWTAdminRefreshTokenExpiresIn => Convert.ToInt32(GetEnvironmentVariable("JWT_ADMIN_REFRESH_TOKEN_EXPIRES_IN", "3100"));
     [Description("SEQ_HOST")]
     public static string SeqHost => GetEnvironmentVariable("SEQ_HOST", "http://localhost:5341");
     [Description("SEQ_USERNAME")]

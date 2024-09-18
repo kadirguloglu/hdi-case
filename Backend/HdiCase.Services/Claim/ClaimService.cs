@@ -30,9 +30,9 @@ public class ClaimService : IClaimService
         return default;
     }
 
-    public string? GetUserId()
+    public int? GetUserId()
     {
-        return GetClaimValue<String>(Enum_UserClaims.Id);
+        return GetClaimValue<int>(Enum_UserClaims.Id);
     }
 
     public string? GetDeviceCode()
