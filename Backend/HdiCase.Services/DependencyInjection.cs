@@ -9,11 +9,14 @@ public static class DependencyInjection
         service.AddSingleton<IRabbitMQService, RabbitMQService>();
         service.AddSingleton(typeof(IDatabaseContext<>), typeof(DatabaseContext<>));
         service.AddSingleton(typeof(IPublisherService<>), typeof(PublisherService<>));
+        service.AddSingleton(typeof(IStorageService<>), typeof(StorageService<>));
         service.AddSingleton<IJWTTokenService, JWTTokenService>();
         service.AddSingleton<IRedisCacheService, RedisCacheService>();
 
         #region services
         service.AddScoped<IAuthenticationService, AuthenticationService>();
+        service.AddScoped<IAggrementService, AggrementService>();
+        service.AddScoped<ICompanyService, CompanyService>();
         #endregion
     }
 }

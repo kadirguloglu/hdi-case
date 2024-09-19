@@ -63,26 +63,34 @@ public class DatabaseContext<TCollection> : IDatabaseContext<TCollection>
     {
         if (EnvironmentSettings.LoggingIsEnabled)
         {
-            var options = new JsonSerializerOptions
+            try
             {
-                DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-                Converters =
+                var options = new JsonSerializerOptions
                 {
-                    new IgnoreUnsupportedTypesConverter()
+                    DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+                    Converters =
+                    {
+                        new IgnoreUnsupportedTypesConverter()
+                    },
+                    ReferenceHandler = ReferenceHandler.IgnoreCycles
+                };
+                if (_logging != null)
+                {
+                    await _logging.InsertAsync(new Logging
+                    {
+                        IpAddress = ClientIpAddress,
+                        NewData = JsonSerializer.Serialize(newData, options),
+                        OldData = JsonSerializer.Serialize(oldData, options),
+                        OperationType = operationType,
+                        TableId = newData?.Id ?? null,
+                        TableName = collection.CollectionName,
+                        UserId = _claimService?.GetUserId()
+                    });
                 }
-            };
-            if (_logging != null)
+            }
+            catch (System.Exception ex)
             {
-                await _logging.InsertAsync(new Logging
-                {
-                    IpAddress = ClientIpAddress,
-                    NewData = JsonSerializer.Serialize(newData, options),
-                    OldData = JsonSerializer.Serialize(oldData, options),
-                    OperationType = operationType,
-                    TableId = newData?.Id ?? null,
-                    TableName = collection.CollectionName,
-                    UserId = _claimService?.GetUserId()
-                });
+                _logger.LogError(ex, "Add log error");
             }
         }
     }

@@ -13,6 +13,7 @@
 
   <ItemGroup>
     <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
+    <PackageReference Include="DocumentFormat.OpenXml" Version="3.1.0" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.8" />
     <PackageReference Include="Microsoft.AspNetCore.Authorization" Version="8.0.8" />
     <PackageReference Include="Microsoft.AspNetCore.Cors" Version="2.2.0" />
@@ -36,6 +37,7 @@
     <PackageReference Include="Microsoft.IdentityModel.Tokens" Version="8.0.2" />
     <PackageReference Include="Microsoft.OData.Edm" Version="8.0.1" />
     <PackageReference Include="Microsoft.OpenApi" Version="1.6.21" />
+    <PackageReference Include="PdfPig" Version="0.1.8" />
     <PackageReference Include="RabbitMQ.Client" Version="6.8.1" />
     <PackageReference Include="Swashbuckle.AspNetCore.Swagger" Version="6.7.3" />
     <PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen" Version="6.7.3" />

@@ -1,3 +1,6 @@
+using System.Net;
+using System.Text.Json.Serialization;
+using System.Threading.RateLimiting;
 using Humanizer;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.OData;
@@ -11,6 +14,62 @@ public class Startup
         var redisHost = EnvironmentSettings.RedisHost;
         var redisPort = EnvironmentSettings.RedisPort;
         var redisPassword = EnvironmentSettings.RedisPassword;
+        services.AddRateLimiter(options =>
+        {
+            // too many request hatasi donuyoruz.
+            options.RejectionStatusCode = 429;
+            options.AddPolicy("ApiKeyPolicy", context =>
+            {
+                // API anahtarını isteğin başlığından alın
+                var path = context.Request.Path.Value;
+                Console.WriteLine("request path = " + path);
+                if (path != null && path.ToLowerInvariant().StartsWith("/api/api/v1/Aggrement/AddNewAggrement"))
+                {
+                    // API anahtarını isteğin başlığından alın
+                    var apiKey = context.Request.Headers["X-Api-Key"].ToString();
+
+                    if (string.IsNullOrEmpty(apiKey))
+                    {
+                        // API anahtarı yoksa erişimi engelle
+                        return RateLimitPartition.GetFixedWindowLimiter("NoApiKey", _ => new FixedWindowRateLimiterOptions
+                        {
+                            PermitLimit = 0, // İzin verilen istek sayısı 0
+                            Window = TimeSpan.FromMinutes(1),
+                            QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                            QueueLimit = 0
+                        });
+                    }
+                    var dbContext = new HdiDbContext();
+                    var company = dbContext.Company.FirstOrDefault(x => x.ApiKey == apiKey);
+                    if (company is null || !company.ApiIsActive)
+                    {
+                        // company bulunamazsa veya api aktif degilse engelle
+                        return RateLimitPartition.GetFixedWindowLimiter("NotfoundApiKey", _ => new FixedWindowRateLimiterOptions
+                        {
+                            PermitLimit = 0, // İzin verilen istek sayısı 0
+                            Window = TimeSpan.FromMinutes(1),
+                            QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                            QueueLimit = 0
+                        });
+                    }
+
+                    // Her API anahtarı için ayrı bir rate limiter oluştur
+                    return RateLimitPartition.GetFixedWindowLimiter(apiKey, _ => new FixedWindowRateLimiterOptions
+                    {
+                        PermitLimit = company.ApiPerMinuteMaximumRequestCount, // Dakikada en fazla 10 istek
+                        Window = TimeSpan.FromMinutes(1), // 1 dakikalik
+                        QueueProcessingOrder = QueueProcessingOrder.OldestFirst, // en eski isi ilk basta yurut
+                        QueueLimit = 0 // siraya islem alma
+                    });
+                }
+                else
+                {
+                    // Diğer URL'ler için rate limiting uygulamayın
+                    return RateLimitPartition.GetNoLimiter(string.Empty);
+                }
+            });
+        });
+
         services.AddSignalR(x =>
         {
             if (EnvironmentSettings.IsDevelopment)
@@ -18,7 +77,7 @@ public class Startup
                 x.EnableDetailedErrors = true;
             }
         })
-        .AddStackExchangeRedis(options =>
+        .AddStackExchangeRedis(options => // signalr redis backplane configuration
         {
             var redisHost = EnvironmentSettings.RedisHost;
             var redisPort = EnvironmentSettings.RedisPort;
@@ -35,6 +94,9 @@ public class Startup
         {
             mvcOptions.EnableEndpointRouting = false;
             mvcOptions.AllowEmptyInputInBodyModelBinding = true;
+        }).AddJsonOptions(x =>
+        {
+            x.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
         });
         InitJWT.Init(services);
         InitSwagger.Init(services);
@@ -63,10 +125,12 @@ public class Startup
 
         app.UseCors();
         app.UseODataBatching();
-
+        app.UseStaticFiles();
         app.UseRouting();
         app.UseAuthentication();
         app.UseAuthorization();
+        app.UseRateLimiter();
+        // load balancing header redirect configuration
         app.UseForwardedHeaders(new ForwardedHeadersOptions
         {
             ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto

@@ -22,5 +22,7 @@ public enum Enum_ResourceKeys
     OldPasswordIsNotValid,
     ChangePasswordError,
     InvalidEmailAddress,
-    TemplateNotFound
+    TemplateNotFound,
+    ApiKeyNotFound,
+    CompanyNotFound
 }

@@ -10,7 +10,7 @@
       "request": "attach",
       "platform": "netCore",
       "sourceFileMap": {
-        "/src": "../Backend/${workspaceFolder}"
+        "/src": "${workspaceFolder}/Backend"
       }
     }
   ]
