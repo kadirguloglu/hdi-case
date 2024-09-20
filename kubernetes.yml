@@ -1,0 +1,218 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: hdi-case-api-namespace
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: hdi-case-api-ingress
+  namespace: hdi-case-api-namespace
+  annotations:
+    nginx.ingress.kubernetes.io/use-regex: "true" #kurallarında regex kullanılmasına izin verir.
+    service.beta.kubernetes.io/azure-load-balancer-internal: "true" #loadbalancing'i aktif eder
+    nginx.ingress.kubernetes.io/proxy-body-size: 100m # dosya boyutu ayari
+
+    nginx.ingress.kubernetes.io/affinity: "cookie" #session'nin cookie uzerinde tutumasini saglar
+    nginx.ingress.kubernetes.io/affinity-mode: "persistent" #session'nun kalici olmasini saglar
+    nginx.ingress.kubernetes.io/session-cookie-name: "hdi-case-services-cookie" #cookie'nin adini belirtir
+    nginx.ingress.kubernetes.io/session-cookie-max-age: "172800" #cookie'nin expire olacagi zamani tanimlar. 48saat
+spec:
+  ingressClassName: nginx
+  rules:
+    - http:
+        paths:
+          - path: /api/
+            pathType: Prefix
+            backend:
+              service:
+                name: hdi-case-api-service
+                port:
+                  number: 7050
+          - path: /(.*) ## default path
+            pathType: Prefix
+            backend:
+              service:
+                name: hdi-case-api-service
+                port:
+                  number: 7050
+
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hdi-case-api-deployment
+  namespace: hdi-case-api-namespace
+spec:
+  replicas: 1 #varsayilanda kac replica calisacak
+  selector:
+    matchLabels:
+      app: hdi-case-api
+  strategy:
+    type: RollingUpdate # replikalar icin sirayla yeni pod olusturu yani 3 adet replicali bir sistemde calisiliyorsa 1 podu kapatip yerine yeni pod olusturur
+    rollingUpdate:
+      maxUnavailable: 1 # update basladiginda en az calisir durumda olmasi gereken pod sayisi. podlar sirayla kapanip yeni versiona gecis yaptigi
+      #  icin bu sirali kapatma isleminde en az calisir durumda olmasi gereken pod sayisi
+      maxSurge: 1 # ayni anda kapat ac yapacagi pod sayisi bu kaynak tuketimini arttirir 1 yazarsak replica sayisi + 1 kadar pod olusturur
+      # 4 podlu islem yapar suanki ornekte 1 pod acar calisir oldusundan emin olur 1 pod kapatir daha hizli yapmak icin bu sayi arttirilabilir
+  template:
+    metadata:
+      labels:
+        app: hdi-case-api
+    spec:
+      imagePullSecrets:
+        - name: imagesecret
+      containers:
+        - name: hdi-case-api
+          image: registry.xxx.com/hdi-case-api-service:dev
+          #image: registry.xxx.com/hdi-case-api-service:prod
+          imagePullPolicy: Always  # her zaman en yeni image i kullan
+          ports:
+            - containerPort: 
+              name: http
+              protocol: TCP
+              containerPort: 7050
+            - containerPort: 
+              name: grpc
+              protocol: TCP
+              containerPort: 7060
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              value: "Development"
+              #value: "Production"
+            - name: MSSQL_CONNECTION_STRING
+              value: "Server=hdi-mssql-host;Database=hdicase;User=sa;Password=Aa1234!!;TrustServerCertificate=True;Max Pool Size=2000;"
+            - name: REDIS_HOST
+              value: "redis-cluster-master.redis-namespace.svc.cluster.local"
+            - name: REDIS_PORT
+              value: "6379"
+            - name: RABBITMQ_HOST
+              value: "rabbitmq-cluster.rabbitmq-namespace.svc.cluster.local"
+            - name: RABBITMQ_PORT
+              value: "5672"
+            - name: RABBITMQ_USERNAME
+              value: "guest"
+            - name: RABBITMQ_PASSWORD
+              value: "guest"
+            - name: SEQ_HOST
+              value: http://seq.seq-namespace.svc.cluster.local
+            - name: LOGGING_IS_ENABLED
+              value: "true"
+          # kaynak sinirlandiramalari
+          resources:
+            requests:
+              memory: "256Mi" # talep edilen minumum kaynak 1GB anlamina gelir
+              cpu: "50m" # talep edilen minumum kaynak %25 anlamina gelir
+            limits:
+              memory: "2Gi" # maksimum kullanilabilecek kaynak 2GB anlamina gelir
+              cpu: "200m" # maksimum kullanilabilecek kaynak %50 anlamina gelir
+          # bir api ucu yazilacak ve belirli araliklarla kubernete bu api uclarina istek atarak sistemin calismasini kontrol edecek
+          # readinessProbe: # hazirlik testi. burada sistemde kullanilan birden fazla uc yazilabilir. bu uclar calisir ve 200 cevabi verdigi surece
+          # bu podun kullanilabilir bir pod olduguna karar verir.
+          #   httpGet:
+          #     path: /api/test/HeartBeat/Ping
+          #     port: 7050
+          #   initialDelaySeconds: 5
+          #   periodSeconds: 5
+          # livenessProbe:# canlilik testi. podun hala cevap veren bir pod olup olmadigi kontrol eder. birden fazla endpoint verilebilir. cevap almadiginda bu
+          # podu tekrar olusturur.
+          #   httpGet:
+          #     path: /api/test/HeartBeat/Ping
+          #     port: 7050
+          #   initialDelaySeconds: 10
+          #   periodSeconds: 30
+
+---
+
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: hdi-case-api-hpa
+  namespace: hdi-case-api-namespace
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: hdi-case-api-deployment #scale edilecek deployment'ın adı.
+  minReplicas: 1 #en az calisacak deployment
+  maxReplicas: 10 #en fazla calisacak deployment
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization #yuzdesel olarak takip etmesini belirtme
+        averageUtilization: 70 #cpu %70'e ciktiginda yeni bir replica olustur
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization #yuzdesel olarak takip etmesini belirtme
+        averageUtilization: 70 #memory %70'e ciktiginda yeni bir replica olustur
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: hdi-case-api-service
+  namespace: hdi-case-api-namespace
+spec:
+  selector:
+    app: hdi-case-api #bu servise gelecek isteklerin yonlendirilecegi deployment
+  ports:
+    - name: http
+      protocol: TCP #kullanilan protokol
+      port: 7050 #servise gelen port numarasi
+      targetPort: 7050 #servisin yonlendirdigi port numarasi
+    - name: grpc
+      protocol: TCP
+      port: 7060
+      targetPort: 7060
+  type: ClusterIP
+
+
+---
+
+# rabbitmq consumer servisini scale etmek icin kullanilacak ayarlar
+# apiVersion: keda.sh/v1alpha1
+# kind: ScaledObject
+# metadata:
+#   name: notification-exchange-consumer-scaledobject
+#   namespace: hdi-case-api-namespace
+# spec:
+#   minReplicaCount: 2 #en az 2 replica calismasi
+#   scaleTargetRef:
+#     name: notification-exchange-consumer-deployment #scale edilecek deployment adi
+#   triggers:
+#     - type: rabbitmq
+#       metadata:
+#         protocol: amqp #rabbitmq ya hangi protocol uzerinden baglanacagi
+#         queueName: notification.all.queue #takip edilecek queue'adi
+#         mode: QueueLength #hangi degere gore replica yapacagi. burada queue deki is sayisina gore yapmasini sagladik
+#         value: "10" #queue'de kac tane is olacagi ayari. 10'dan fazla is oldugunda replica baslayacak
+#         host: amqp://guest:guest@rabbitmq-cluster.rabbitmq-namespace.svc.cluster.local:5672 #rabbitmq'ya baglanilacak connectionstring
+#     - type: rabbitmq
+#       metadata:
+#         protocol: amqp
+#         queueName: notification.all.email
+#         mode: QueueLength
+#         value: "10"
+#         host: amqp://guest:guest@rabbitmq-cluster.rabbitmq-namespace.svc.cluster.local:5672
+#     - type: rabbitmq
+#       metadata:
+#         protocol: amqp
+#         queueName: notification.all.mobile
+#         mode: QueueLength
+#         value: "10"
+#         host: amqp://guest:guest@rabbitmq-cluster.rabbitmq-namespace.svc.cluster.local:5672
+#     - type: rabbitmq
+#       metadata:
+#         protocol: amqp
+#         queueName: notification.all.sms
+#         mode: QueueLength
+#         value: "10"
+#         host: amqp://guest:guest@rabbitmq-cluster.rabbitmq-namespace.svc.cluster.local:5672

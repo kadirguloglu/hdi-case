@@ -11,3 +11,9 @@ Backend servislerinin port degisinleri icin RestApi projesinin program.cs dosyas
 Tanimlanan yeni port numaralarini Dockerfile.dev, Dockerfile.prod, docker-compose.yml ve frontend/hdi-case klasorunde bulunan env dosyalarindada yapilmalidir.
 
 Frontend projesinin port degisimi icin frontend/hdi-case/package.json dosyasinda bulunan script'ten yapabilirsiniz.
+
+# Kubernetes uzerinde yayinlama
+
+Kubernetes cluster'inize baglandiktan sonra helm-install-clusters.sh dosyasini 1 kere calistirilarak tum kurulumlar yapilir.
+bu dosya kurulumlardan sonra ruh.sh dosyasini calistiracaktir. run.sh dosyasinda kubernetes icin yazilan tum yml dosyalari calistirilacak ve servisiniz
+kubernetes uzerinde kosmaya baslayacaktir.
