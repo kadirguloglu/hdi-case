@@ -32,7 +32,7 @@ public class ClaimService : IClaimService
 
     public int? GetUserId()
     {
-        return GetClaimValue<int?>(Enum_UserClaims.Id);
+        return GetClaimValue<int>(Enum_UserClaims.Id);
     }
 
     public string? GetDeviceCode()

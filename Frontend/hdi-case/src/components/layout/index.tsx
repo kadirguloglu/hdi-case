@@ -21,7 +21,7 @@ import MenuItem from "@mui/material/MenuItem";
 import Menu from "@mui/material/Menu";
 import useAuthentication from "../../contexts/authentication-provider/useAuthentication";
 import HomeIcon from "@mui/icons-material/Home";
-import { Collapse, TextField } from "@mui/material";
+import { Badge, Collapse, TextField } from "@mui/material";
 import AbcIcon from "@mui/icons-material/Abc";
 import { turkishToEnglish } from "../../utils/string-utils";
 import { Enum_Permission } from "../../types/enums/Enum_Permission";
@@ -30,6 +30,8 @@ import ExpandLess from "@mui/icons-material/ExpandLess";
 import ExpandMore from "@mui/icons-material/ExpandMore";
 import SettingsIcon from "@mui/icons-material/Settings";
 import KeyIcon from "@mui/icons-material/Key";
+import useNotification from "../../contexts/notification-provider/useNotification";
+import NotificationsIcon from "@mui/icons-material/Notifications";
 
 const drawerWidth = 240;
 
@@ -103,6 +105,7 @@ const Drawer = styled(MuiDrawer, {
 }));
 
 export default function MiniDrawer() {
+  const { notifications } = useNotification();
   const [searchText, setSearchText] = React.useState<string>("");
   const [openNestedMenu, setOpenNestedMenu] = React.useState<
     {
@@ -197,6 +200,47 @@ export default function MiniDrawer() {
               }}
             >
               <MenuItem onClick={_handleSignOut}>Sign Out</MenuItem>
+            </Menu>
+          </div>
+          <div>
+            <IconButton
+              size="large"
+              aria-label="account of current user"
+              aria-controls="menu-appbar"
+              aria-haspopup="true"
+              onClick={(event: React.MouseEvent<HTMLElement>) => {
+                setAnchorEl(event.currentTarget);
+              }}
+              color="inherit"
+            >
+              <Badge badgeContent={notifications?.length} color="error">
+                <NotificationsIcon />
+              </Badge>
+            </IconButton>
+            <Menu
+              id="menu-appbar"
+              anchorEl={anchorEl}
+              anchorOrigin={{
+                vertical: "top",
+                horizontal: "right",
+              }}
+              keepMounted
+              transformOrigin={{
+                vertical: "top",
+                horizontal: "right",
+              }}
+              open={Boolean(anchorEl)}
+              onClose={() => {
+                setAnchorEl(null);
+              }}
+            >
+              {notifications?.map((item) => {
+                return (
+                  <MenuItem key={item.aggrement.id} onClick={_handleSignOut}>
+                    {item.company.name} / {item.aggrement.createdDate}
+                  </MenuItem>
+                );
+              })}
             </Menu>
           </div>
         </Toolbar>

@@ -9,13 +9,15 @@ public class AggrementService : IAggrementService
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly IDatabaseContext<AggrementFile> _aggrementFileContext;
     private readonly ILogger<AggrementService> _logger;
+    private readonly INotificationHubDispatcher _notificationHubDispatcher;
     public AggrementService(
         IDatabaseContext<Aggrement> context,
         ICompanyService companyService,
         IStorageService<Aggrement> storage,
         IHttpContextAccessor httpContextAccessor,
         IDatabaseContext<AggrementFile> aggrementFileContext,
-        ILogger<AggrementService> logger
+        ILogger<AggrementService> logger,
+        INotificationHubDispatcher notificationHubDispatcher
     )
     {
         _context = context;
@@ -24,6 +26,7 @@ public class AggrementService : IAggrementService
         _httpContextAccessor = httpContextAccessor;
         _aggrementFileContext = aggrementFileContext;
         _logger = logger;
+        _notificationHubDispatcher = notificationHubDispatcher;
     }
 
     public async Task<Result<int>> AddNewAggrement(AddNewAggrementRequest model)
@@ -75,6 +78,7 @@ public class AggrementService : IAggrementService
             {
                 _logger.LogError(ex, "Aggrement file builder error");
             }
+            await _notificationHubDispatcher.NewAggrementNotification(aggrement.Id);
             return new Result<int>(true, aggrement.Id);
         }
         return new Result<int>(false);

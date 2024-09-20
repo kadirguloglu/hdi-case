@@ -20,6 +20,7 @@ public static class DependencyInjection
         service.AddScoped<IAdminLoginDataService, AdminLoginDataService>();
         service.AddScoped<ILoggingService, LoggingService>();
         service.AddScoped<IRoleService, RoleService>();
+        service.AddScoped<INotificationHubDispatcher, NotificationHubDispatcher>();
         #endregion
     }
 }

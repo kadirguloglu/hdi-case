@@ -24,6 +24,7 @@ import { Enum_Permission } from "./types/enums/Enum_Permission";
 import LoggingScreen from "./screens/logging";
 import RoleScreen from "./screens/role";
 import EditRoleScreen from "./screens/role/editRole";
+import { NotificationProvider } from "./contexts/notification-provider";
 
 const Root = () => {
   return (
@@ -48,7 +49,13 @@ const Router = () => {
   const router = createBrowserRouter([
     {
       path: !isAuth ? "*" : "/",
-      element: !isAuth ? <LoginScreen /> : <LayoutScreen />,
+      element: !isAuth ? (
+        <LoginScreen />
+      ) : (
+        <NotificationProvider>
+          <LayoutScreen />
+        </NotificationProvider>
+      ),
       children: [
         {
           index: true,
