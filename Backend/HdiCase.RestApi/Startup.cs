@@ -4,6 +4,7 @@ using System.Threading.RateLimiting;
 using Humanizer;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.OData;
+using Microsoft.EntityFrameworkCore;
 
 public class Startup
 {
@@ -42,7 +43,7 @@ public class Startup
                         });
                     }
                     var dbContext = new HdiDbContext();
-                    var company = dbContext.Company.FirstOrDefault(x => x.ApiKey == apiKey);
+                    var company = dbContext.Company.AsNoTracking().FirstOrDefault(x => x.ApiKey == apiKey);
                     if (company is null || !company.ApiIsActive)
                     {
                         // company bulunamazsa veya api aktif degilse engelle
@@ -112,6 +113,7 @@ public class Startup
     {
         if (EnvironmentSettings.IsDevelopment)
         {
+            app.UseDeveloperExceptionPage();
             app.UseSwagger(x =>
             {
                 x.RouteTemplate = RouteKey + "/swagger/{documentName}/swagger.json";
@@ -119,7 +121,7 @@ public class Startup
             app.UseSwaggerUI(c =>
             {
                 c.EnableDeepLinking();
-                c.SwaggerEndpoint("/" + RouteKey + "/swagger/Mobile-v1/swagger.json", "Test");
+                c.SwaggerEndpoint("/" + RouteKey + "/swagger/OData-v1/swagger.json", "OData V1.0");
                 c.SwaggerEndpoint("/" + RouteKey + "/swagger/Api-v1/swagger.json", "Api V1.0");
                 c.RoutePrefix = RouteKey + "/swagger";
             });

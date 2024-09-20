@@ -22,7 +22,7 @@ public static class InitDatabaseContext
                         y.EnableRetryOnFailure(10, TimeSpan.FromSeconds(30), null);
                     });
 
-                }, ServiceLifetime.Singleton);
+                });
         using (HdiDbContext context = new HdiDbContext())
         {
             context.Database.Migrate();

@@ -74,6 +74,7 @@ public class DatabaseContext<TCollection> : IDatabaseContext<TCollection>
                     },
                     ReferenceHandler = ReferenceHandler.IgnoreCycles
                 };
+                var userId = _claimService?.GetUserId();
                 if (_logging != null)
                 {
                     await _logging.InsertAsync(new Logging
@@ -84,12 +85,13 @@ public class DatabaseContext<TCollection> : IDatabaseContext<TCollection>
                         OperationType = operationType,
                         TableId = newData?.Id ?? null,
                         TableName = collection.CollectionName,
-                        UserId = _claimService?.GetUserId()
+                        UserId = userId is null || userId == 0 ? null : userId
                     });
                 }
             }
             catch (System.Exception ex)
             {
+                ex.ConsoleLogException("Add log error");
                 _logger.LogError(ex, "Add log error");
             }
         }
@@ -123,7 +125,7 @@ public class DatabaseContext<TCollection> : IDatabaseContext<TCollection>
         }
         catch (Exception ex)
         {
-            Console.WriteLine("Error: " + ex.Message);
+            ex.ConsoleLogException("InsertAsync", entity);
             _logger.LogError(ex, "public async Task<bool> InsertAsync(TCollection entity)");
         }
         finally
@@ -156,7 +158,8 @@ public class DatabaseContext<TCollection> : IDatabaseContext<TCollection>
         }
         catch (Exception ex)
         {
-            Console.WriteLine("Error: " + ex.Message);
+            ex.ConsoleLogException("InsertManyAsync");
+            _logger.LogError(ex, "InsertManyAsync");
         }
         finally
         {
@@ -190,7 +193,7 @@ public class DatabaseContext<TCollection> : IDatabaseContext<TCollection>
         }
         catch (Exception ex)
         {
-            Console.WriteLine("Error: " + ex.Message);
+            ex.ConsoleLogException("UpdateAsync", entity);
             _logger.LogError(ex, "Task<bool> UpdateAsync(TCollection entity)");
         }
         finally
@@ -207,15 +210,16 @@ public class DatabaseContext<TCollection> : IDatabaseContext<TCollection>
         }
         catch (Exception ex)
         {
+            ex.ConsoleLogException("GetAsync", predicate);
             _logger.LogError(ex, "MongoContext<TCollection>: GetAsync " + predicate.ToString());
             return null;
         }
     }
 
     public async Task<List<TCollection>?> GetAsync<TKey>(
-        Expression<Func<TCollection, bool>> predicate,
-        Expression<Func<TCollection, TKey>> orderByPredicate,
-        bool isDescending = false)
+       Expression<Func<TCollection, bool>> predicate,
+       Expression<Func<TCollection, TKey>> orderByPredicate,
+       bool isDescending = false)
     {
         try
         {
@@ -227,6 +231,7 @@ public class DatabaseContext<TCollection> : IDatabaseContext<TCollection>
         }
         catch (Exception ex)
         {
+            ex.ConsoleLogException("GetAsync", predicate, orderByPredicate);
             _logger.LogError(ex, "MongoContext<TCollection>: GetAsync ");
             return null;
         }
@@ -248,6 +253,7 @@ public class DatabaseContext<TCollection> : IDatabaseContext<TCollection>
         }
         catch (Exception ex)
         {
+            ex.ConsoleLogException("GetAsync", predicate, orderByPredicate);
             _logger.LogError(ex, "MongoContext<TCollection>: GetAsync ");
             return null;
         }
@@ -286,6 +292,7 @@ public class DatabaseContext<TCollection> : IDatabaseContext<TCollection>
         }
         catch (Exception ex)
         {
+            ex.ConsoleLogException("GetAsync", predicate, orderByPredicate);
             _logger.LogError(ex, "MongoContext<TCollection>: GetAsync ");
             return null;
         }
@@ -299,6 +306,7 @@ public class DatabaseContext<TCollection> : IDatabaseContext<TCollection>
         }
         catch (Exception ex)
         {
+            ex.ConsoleLogException("GetAsync", predicate);
             _logger.LogError(ex, "MongoContext<TCollection>: GetAsync ");
             return null;
         }
@@ -312,6 +320,7 @@ public class DatabaseContext<TCollection> : IDatabaseContext<TCollection>
         }
         catch (Exception ex)
         {
+            ex.ConsoleLogException("AnyAsync", predicate);
             _logger.LogError(ex, "MongoContext<TCollection>: AnyAsync ");
             return null;
         }
@@ -339,6 +348,7 @@ public class DatabaseContext<TCollection> : IDatabaseContext<TCollection>
         }
         catch (Exception ex)
         {
+            ex.ConsoleLogException("DeleteAsync", predicate);
             _logger.LogError(ex, "MongoContext<TCollection>: DeleteAsync ");
         }
         finally
@@ -369,6 +379,7 @@ public class DatabaseContext<TCollection> : IDatabaseContext<TCollection>
         }
         catch (System.Exception ex)
         {
+            ex.ConsoleLogException("GetByIdAsync", id);
             _logger.LogError(ex, "Task<TCollection?> GetByIdAsync(string id)");
             return null;
         }
@@ -422,7 +433,8 @@ public class DatabaseContext<TCollection> : IDatabaseContext<TCollection>
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "MongoContext<TCollection>: DeleteAsync ");
+            ex.ConsoleLogException("DeleteByIdAsync", id);
+            _logger.LogError(ex, "MongoContext<TCollection>: DeleteByIdAsync ");
         }
         finally
         {

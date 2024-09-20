@@ -7,11 +7,11 @@ public static class DependencyInjection
         service.AddHttpContextAccessor();
         service.AddSingleton<IClaimService, ClaimService>();
         service.AddSingleton<IRabbitMQService, RabbitMQService>();
-        service.AddSingleton(typeof(IDatabaseContext<>), typeof(DatabaseContext<>));
         service.AddSingleton(typeof(IPublisherService<>), typeof(PublisherService<>));
         service.AddSingleton(typeof(IStorageService<>), typeof(StorageService<>));
         service.AddSingleton<IJWTTokenService, JWTTokenService>();
         service.AddSingleton<IRedisCacheService, RedisCacheService>();
+        service.AddScoped(typeof(IDatabaseContext<>), typeof(DatabaseContext<>));
 
         #region services
         service.AddScoped<IAuthenticationService, AuthenticationService>();

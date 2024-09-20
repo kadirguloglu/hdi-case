@@ -1,3 +1,5 @@
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using Serilog.Events;
 
 public static class IgnoredExceptions
@@ -51,5 +53,42 @@ public static class IgnoredExceptions
             return false;
         }
         return false;
+    }
+
+    public static void ConsoleLogException(this Exception ex, string title = "", object? data1 = null, object? data2 = null)
+    {
+        if (EnvironmentSettings.IsDevelopment)
+        {
+            string dataText1 = "";
+            if (data1 != null)
+            {
+                var options = new JsonSerializerOptions
+                {
+                    DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+                    Converters =
+                    {
+                        new IgnoreUnsupportedTypesConverter()
+                    },
+                    ReferenceHandler = ReferenceHandler.IgnoreCycles
+                };
+                dataText1 = JsonSerializer.Serialize(data1, options);
+            }
+            string dataText2 = "";
+            if (data2 != null)
+            {
+                var options = new JsonSerializerOptions
+                {
+                    DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+                    Converters =
+                    {
+                        new IgnoreUnsupportedTypesConverter()
+                    },
+                    ReferenceHandler = ReferenceHandler.IgnoreCycles
+                };
+                dataText2 = JsonSerializer.Serialize(data2, options);
+            }
+            Console.WriteLine(title + " _ Ex Message = " + ex.Message + " _ Data1 = " + dataText1 + " _ Data2 = " + dataText2);
+            Console.WriteLine(title + " _ Ex InnerException Message = " + (ex.InnerException?.Message ?? "Inner exception not found"));
+        }
     }
 }

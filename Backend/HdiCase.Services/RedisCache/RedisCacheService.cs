@@ -1,11 +1,21 @@
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using Microsoft.Extensions.Caching.Distributed;
 using StackExchange.Redis;
 
 public class RedisCacheService : IRedisCacheService
 {
     private readonly IDistributedCache _distributedCache;
+    private readonly JsonSerializerOptions jsonOptions = new JsonSerializerOptions
+    {
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+        Converters =
+                    {
+                        new IgnoreUnsupportedTypesConverter()
+                    },
+        ReferenceHandler = ReferenceHandler.IgnoreCycles
+    };
     public RedisCacheService(IDistributedCache distributedCache)
     {
         _distributedCache = distributedCache;
@@ -24,7 +34,7 @@ public class RedisCacheService : IRedisCacheService
         }
         catch (System.Exception ex)
         {
-            Console.WriteLine("Error: " + ex.Message);
+            Console.WriteLine("RedisCacheService - GetKey: " + ex.Message);
             return "KeyGenerateErrorDumyCacheKey";
         }
     }
@@ -39,11 +49,11 @@ public class RedisCacheService : IRedisCacheService
             {
                 return null;
             }
-            return JsonSerializer.Deserialize<T>(value);
+            return JsonSerializer.Deserialize<T>(value, jsonOptions);
         }
         catch (System.Exception ex)
         {
-            Console.WriteLine("Error: " + ex.Message);
+            Console.WriteLine("RedisCacheService - GetAsync: " + ex.Message);
             return null;
         }
     }
@@ -57,7 +67,7 @@ public class RedisCacheService : IRedisCacheService
         }
         catch (System.Exception ex)
         {
-            Console.WriteLine("Error: " + ex.Message);
+            Console.WriteLine("RedisCacheService - RemoveAsync: " + ex.Message);
         }
     }
 
@@ -70,7 +80,7 @@ public class RedisCacheService : IRedisCacheService
         }
         catch (System.Exception ex)
         {
-            Console.WriteLine("Error: " + ex.Message);
+            Console.WriteLine("RedisCacheService - SetAsync: " + ex.Message);
         }
     }
 
@@ -90,11 +100,11 @@ public class RedisCacheService : IRedisCacheService
             {
                 value2 = "";
             }
-            return (JsonSerializer.Deserialize<T>(value), JsonSerializer.Deserialize<K>(value2));
+            return (JsonSerializer.Deserialize<T>(value, jsonOptions), JsonSerializer.Deserialize<K>(value2, jsonOptions));
         }
         catch (System.Exception ex)
         {
-            Console.WriteLine("Error: " + ex.Message);
+            Console.WriteLine("RedisCacheService - GetMultiAsync: " + ex.Message);
             return default;
         }
     }
@@ -110,7 +120,7 @@ public class RedisCacheService : IRedisCacheService
         }
         catch (System.Exception ex)
         {
-            Console.WriteLine("Error: " + ex.Message);
+            Console.WriteLine("RedisCacheService - SetMultiAsync: " + ex.Message);
         }
     }
 
@@ -219,7 +229,7 @@ public class RedisCacheService : IRedisCacheService
         var hashValue = await _distributedCache.GetStringAsync(jobKey);
         if (hashValue is not null && hashValue != "")
         {
-            var bytesValue = JsonSerializer.Deserialize<List<byte>>(hashValue);
+            var bytesValue = JsonSerializer.Deserialize<List<byte>>(hashValue, jsonOptions);
             if (bytesValue != null && bytesValue.Count > 0)
             {
                 var value = Encoding.UTF8.GetString(bytesValue.ToArray());
@@ -231,9 +241,9 @@ public class RedisCacheService : IRedisCacheService
 
     private async Task SetString(string jobKey, object value, DistributedCacheEntryOptions options)
     {
-        var valueString = JsonSerializer.Serialize(value);
+        var valueString = JsonSerializer.Serialize(value, jsonOptions);
         var byteValue = Encoding.UTF8.GetBytes(valueString);
-        var byteString = JsonSerializer.Serialize(byteValue.ToList());
+        var byteString = JsonSerializer.Serialize(byteValue.ToList(), jsonOptions);
         await _distributedCache.SetStringAsync(jobKey, byteString, options);
     }
 }
