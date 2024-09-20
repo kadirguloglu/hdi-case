@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { DrawerProvider } from "./contexts/drawer-provider";
 import "devextreme/dist/css/dx.material.purple.light.compact.css";
 import { RouterProvider, createBrowserRouter } from "react-router-dom";
@@ -18,6 +19,11 @@ import { CircularProgress } from "@mui/material";
 import LayoutScreen from "./components/layout";
 import LoginScreen from "./screens/login";
 import DashboardScreen from "./screens/dashboard";
+import AdminLoginDataScreen from "./screens/admin-login-data";
+import { Enum_Permission } from "./types/enums/Enum_Permission";
+import LoggingScreen from "./screens/logging";
+import RoleScreen from "./screens/role";
+import EditRoleScreen from "./screens/role/editRole";
 
 const Root = () => {
   return (
@@ -38,7 +44,7 @@ const Root = () => {
 export default Root;
 
 const Router = () => {
-  const { isAuth, isLoading } = useAuthentication();
+  const { isAuth, isLoading, isAuthenticate } = useAuthentication();
   const router = createBrowserRouter([
     {
       path: !isAuth ? "*" : "/",
@@ -48,6 +54,30 @@ const Router = () => {
           index: true,
           element: <DashboardScreen />,
         },
+        (isAuthenticate(Enum_Permission.AdminLoginDataList)
+          ? {
+              path: "admin-login-data",
+              element: <AdminLoginDataScreen />,
+            }
+          : false) as any,
+        (isAuthenticate(Enum_Permission.LoggingList)
+          ? {
+              path: "logging",
+              element: <LoggingScreen />,
+            }
+          : false) as any,
+        (isAuthenticate(Enum_Permission.RoleList)
+          ? {
+              path: "role",
+              element: <RoleScreen />,
+            }
+          : false) as any,
+        (isAuthenticate(Enum_Permission.RoleInsert)
+          ? {
+              path: "editRole/:id",
+              element: <EditRoleScreen />,
+            }
+          : false) as any,
       ].filter(Boolean),
     },
   ]);
@@ -56,7 +86,6 @@ const Router = () => {
   }
   return (
     <RouterProvider
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       router={router as any}
       fallbackElement={<CircularProgress />}
     />

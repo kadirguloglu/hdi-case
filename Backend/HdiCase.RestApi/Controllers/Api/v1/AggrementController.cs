@@ -1,4 +1,3 @@
-
 using HdiCase.RestApi.Controllers.Api.v1;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

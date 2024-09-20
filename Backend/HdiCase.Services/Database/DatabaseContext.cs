@@ -101,13 +101,18 @@ public class DatabaseContext<TCollection> : IDatabaseContext<TCollection>
         await Task.CompletedTask;
     }
 
+    public IQueryable<TCollection> Queryable()
+    {
+        return _collectionContext.AsQueryable();
+    }
+
     public async Task<bool> InsertAsync(TCollection entity)
     {
         try
         {
             entity.CreatedDate = DateTime.UtcNow;
             entity.LastUpdatedDate = DateTime.UtcNow;
-            var test = await _collectionContext.AddAsync(entity);
+            _collectionContext.Add(entity);
             var result = await _context.SaveChangesAsync();
             await _distributedCache.SetAsync(Enum_RedisCacheKeys.ModelCaching, entity, new DistributedCacheEntryOptions
             {
@@ -137,7 +142,7 @@ public class DatabaseContext<TCollection> : IDatabaseContext<TCollection>
                 entity.CreatedDate = DateTime.UtcNow;
                 entity.LastUpdatedDate = DateTime.UtcNow;
             }
-            await _collectionContext.AddRangeAsync(models);
+            _collectionContext.AddRange(models);
             var result = await _context.SaveChangesAsync();
             foreach (var entity in models)
             {
@@ -198,7 +203,7 @@ public class DatabaseContext<TCollection> : IDatabaseContext<TCollection>
     {
         try
         {
-            return await _collectionContext.Where(predicate).ToListAsync();
+            return await _collectionContext.AsNoTracking().Where(predicate).ToListAsync();
         }
         catch (Exception ex)
         {
@@ -216,9 +221,9 @@ public class DatabaseContext<TCollection> : IDatabaseContext<TCollection>
         {
             if (isDescending)
             {
-                return await _collectionContext.OrderByDescending(orderByPredicate).Where(predicate).ToListAsync();
+                return await _collectionContext.AsNoTracking().OrderByDescending(orderByPredicate).Where(predicate).ToListAsync();
             }
-            return await _collectionContext.OrderBy(orderByPredicate).Where(predicate).ToListAsync();
+            return await _collectionContext.AsNoTracking().OrderBy(orderByPredicate).Where(predicate).ToListAsync();
         }
         catch (Exception ex)
         {
@@ -237,9 +242,9 @@ public class DatabaseContext<TCollection> : IDatabaseContext<TCollection>
         {
             if (isDescending)
             {
-                return await _collectionContext.OrderByDescending(orderByPredicate).Where(predicate).Take(limit).ToListAsync();
+                return await _collectionContext.AsNoTracking().OrderByDescending(orderByPredicate).Where(predicate).Take(limit).ToListAsync();
             }
-            return await _collectionContext.OrderBy(orderByPredicate).Where(predicate).Take(limit).ToListAsync();
+            return await _collectionContext.AsNoTracking().OrderBy(orderByPredicate).Where(predicate).Take(limit).ToListAsync();
         }
         catch (Exception ex)
         {
@@ -269,12 +274,12 @@ public class DatabaseContext<TCollection> : IDatabaseContext<TCollection>
             }
             if (isDescending)
             {
-                return await _collectionContext.OrderByDescending(orderByPredicate)
+                return await _collectionContext.AsNoTracking().OrderByDescending(orderByPredicate)
                     .Where(predicate)
                     .Skip(skip).Take(pageSize)
                     .ToListAsync();
             }
-            return await _collectionContext.OrderBy(orderByPredicate)
+            return await _collectionContext.AsNoTracking().OrderBy(orderByPredicate)
                 .Where(predicate)
                 .Skip(skip).Take(pageSize)
                 .ToListAsync();
@@ -290,7 +295,7 @@ public class DatabaseContext<TCollection> : IDatabaseContext<TCollection>
     {
         try
         {
-            return await _collectionContext.FirstOrDefaultAsync(predicate);
+            return await _collectionContext.AsNoTracking().FirstOrDefaultAsync(predicate);
         }
         catch (Exception ex)
         {
@@ -303,7 +308,7 @@ public class DatabaseContext<TCollection> : IDatabaseContext<TCollection>
     {
         try
         {
-            return await _collectionContext.AnyAsync(predicate);
+            return await _collectionContext.AsNoTracking().AnyAsync(predicate);
         }
         catch (Exception ex)
         {
@@ -352,7 +357,7 @@ public class DatabaseContext<TCollection> : IDatabaseContext<TCollection>
         }
         try
         {
-            var result = await _collectionContext.FirstOrDefaultAsync(x => x.Id == id);
+            var result = await _collectionContext.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id);
             if (result != null)
             {
                 await _distributedCache.SetAsync(Enum_RedisCacheKeys.ModelCaching, result, new DistributedCacheEntryOptions
@@ -384,7 +389,7 @@ public class DatabaseContext<TCollection> : IDatabaseContext<TCollection>
         {
             return dataList;
         }
-        var result = await _collectionContext.Where(x => ids.Contains(x.Id)).ToListAsync();
+        var result = await _collectionContext.AsNoTracking().Where(x => ids.Contains(x.Id)).ToListAsync();
         if (result != null)
         {
             foreach (var item in result)

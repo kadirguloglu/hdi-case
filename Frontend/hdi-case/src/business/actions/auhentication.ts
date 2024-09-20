@@ -4,6 +4,8 @@ import { GetCurrentUserResponse } from "../../types/dto/authenticationDto/getCur
 
 export const getCurrentUser = async () => {
   return await axiosInstance
-    .get<Result<GetCurrentUserResponse>>(`/v1/authentication/GetCurrentUser`)
+    .get<Result<GetCurrentUserResponse>>(
+      `/api/api/v1/authentication/GetCurrentUser`
+    )
     .then((x) => x.data);
 };

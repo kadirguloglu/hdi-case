@@ -80,9 +80,11 @@ const AuthenticationProvider = ({
           const roles: number[] = [];
           for (let i = 0; i < data.roles.length; i++) {
             const element = data.roles[i];
-            for (let k = 0; k < element.permissionKeys.length; k++) {
-              const element1 = element.permissionKeys[k];
-              roles.push(element1);
+            if (element.permissionKeys) {
+              for (let k = 0; k < element.permissionKeys.length; k++) {
+                const element1 = element.permissionKeys[k];
+                roles.push(element1);
+              }
             }
           }
           setPermissionKeys(roles);
@@ -112,6 +114,7 @@ const AuthenticationProvider = ({
       return false;
     }
   };
+
   const signOut = () => {
     localStorage.removeItem("bearerToken");
     localStorage.removeItem("userId");

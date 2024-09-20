@@ -7,6 +7,8 @@ using Microsoft.AspNetCore.OData;
 
 public class Startup
 {
+    // extra bir route url eklememizin sebebi microservice projelerimizde her bir servisi alt bir domainde degilde ayni domain uzerinde yayinlamak istersek
+    // her bir servis icin ozel bir key vererek birbirinden ayristirmak icin kullaniyoruz
     private readonly string RouteKey = Enum_RoutingKeys.Api.ToString().Underscore();
     public void ConfigureServices(IServiceCollection services)
     {

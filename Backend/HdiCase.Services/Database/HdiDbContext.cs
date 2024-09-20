@@ -58,7 +58,7 @@ public class HdiDbContext : DbContext
                 Id = 1,
                 Email = "superadmin@hdi.com",
                 IsDeveloper = true,
-                Password = BN.BCrypt.HashPassword("65a770b3-3363-4a67-9258-7d89207605f8-277c7e0b-8148-49ee-9141-5ec19d29cee5"),
+                Password = BN.BCrypt.HashPassword("Aa1234!!"),
                 IsActive = true,
                 RoleId = new int[] { 1, 2, 3 }
             });

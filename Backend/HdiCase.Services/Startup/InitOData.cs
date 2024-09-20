@@ -11,6 +11,7 @@ public static class InitOData
         ODataConventionModelBuilder builder = new();
         builder.EntitySet<AdminLoginData>("AdminLoginData");
         builder.EntitySet<Logging>("Logging");
+        builder.EntitySet<Role>("Role");
         builder.EnableLowerCamelCase();
         return builder.GetEdmModel();
     }

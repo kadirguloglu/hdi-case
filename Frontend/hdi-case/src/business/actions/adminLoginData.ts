@@ -5,7 +5,7 @@ import { Result } from "../../types/abstract/result";
 
 export const login = async (model: AuthenticationRequest) => {
   return await axiosInstance.post<Result<AuthenticationResponse>>(
-    `/v1/authentication/login`,
+    `/api/api/v1/Authentication/Login`,
     model
   );
 };

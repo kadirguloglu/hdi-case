@@ -17,6 +17,9 @@ public static class DependencyInjection
         service.AddScoped<IAuthenticationService, AuthenticationService>();
         service.AddScoped<IAggrementService, AggrementService>();
         service.AddScoped<ICompanyService, CompanyService>();
+        service.AddScoped<IAdminLoginDataService, AdminLoginDataService>();
+        service.AddScoped<ILoggingService, LoggingService>();
+        service.AddScoped<IRoleService, RoleService>();
         #endregion
     }
 }

@@ -1,5 +1,5 @@
 export interface TableEntities<T> {
-  _Id: string | null;
+  id: string | null;
   createdDate: string;
   lastUpdatedDate: string;
   collectionName: string;

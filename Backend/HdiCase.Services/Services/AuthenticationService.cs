@@ -51,11 +51,11 @@ public class AuthenticationService : IAuthenticationService
     public async Task<Result<GetCurrentUserResponse>> GetCurrentUser()
     {
         var currentUserId = _claimService.GetUserId();
-        if (currentUserId != null)
+        if (currentUserId == null)
         {
             return new Result<GetCurrentUserResponse>(false);
         }
-        var user = await _adminLoginDataContext.FirstAsync(x => x.Id == currentUserId);
+        var user = await _adminLoginDataContext.GetByIdAsync(currentUserId.Value);
         if (user == null)
         {
             return new Result<GetCurrentUserResponse>(false);

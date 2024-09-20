@@ -21,8 +21,15 @@ import MenuItem from "@mui/material/MenuItem";
 import Menu from "@mui/material/Menu";
 import useAuthentication from "../../contexts/authentication-provider/useAuthentication";
 import HomeIcon from "@mui/icons-material/Home";
-import { TextField } from "@mui/material";
+import { Collapse, TextField } from "@mui/material";
+import AbcIcon from "@mui/icons-material/Abc";
 import { turkishToEnglish } from "../../utils/string-utils";
+import { Enum_Permission } from "../../types/enums/Enum_Permission";
+import IsAuthentication from "../../contexts/authentication-provider/IsAuthentication";
+import ExpandLess from "@mui/icons-material/ExpandLess";
+import ExpandMore from "@mui/icons-material/ExpandMore";
+import SettingsIcon from "@mui/icons-material/Settings";
+import KeyIcon from "@mui/icons-material/Key";
 
 const drawerWidth = 240;
 
@@ -97,6 +104,12 @@ const Drawer = styled(MuiDrawer, {
 
 export default function MiniDrawer() {
   const [searchText, setSearchText] = React.useState<string>("");
+  const [openNestedMenu, setOpenNestedMenu] = React.useState<
+    {
+      menuKey: string;
+      isOpen: boolean;
+    }[]
+  >([]);
   const theme = useTheme();
   const [open, setOpen] = React.useState(false);
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
@@ -217,6 +230,126 @@ export default function MiniDrawer() {
               />
             </ListItemButton>
           </SearchMenuItem>
+
+          <IsAuthentication permission={Enum_Permission.RoleList}>
+            <SearchMenuItem name="Roles" key={searchText}>
+              <ListItemButton component={Link} to="role">
+                <ListItemIcon>
+                  <KeyIcon fontSize="small" />
+                </ListItemIcon>
+                <ListItemText
+                  primary={"Roles"}
+                  primaryTypographyProps={primaryTypographyProps}
+                />
+              </ListItemButton>
+            </SearchMenuItem>
+          </IsAuthentication>
+
+          <IsAuthentication
+            permission={[
+              Enum_Permission.AdminLoginDataList,
+              Enum_Permission.LoggingList,
+            ]}
+          >
+            <ListItemButton
+              onClick={() => {
+                const currentMenu = openNestedMenu.find(
+                  (x) => x.menuKey === "others"
+                ) ?? {
+                  menuKey: "others",
+                  isOpen: false,
+                };
+                currentMenu.isOpen = !currentMenu.isOpen;
+                setOpenNestedMenu([...openNestedMenu, currentMenu]);
+              }}
+            >
+              <ListItemIcon>
+                <AbcIcon fontSize="small" />
+              </ListItemIcon>
+              <ListItemText
+                primary="Others"
+                primaryTypographyProps={primaryTypographyProps}
+              />
+              {openNestedMenu.find((x) => x.menuKey === "others")?.isOpen ??
+              false ? (
+                <ExpandLess />
+              ) : (
+                <ExpandMore />
+              )}
+            </ListItemButton>
+            <Collapse
+              in={
+                openNestedMenu.find((x) => x.menuKey === "others")?.isOpen ??
+                false
+              }
+              timeout="auto"
+              unmountOnExit
+            >
+              <List component="div" disablePadding>
+                <IsAuthentication
+                  permission={Enum_Permission.AdminLoginDataList}
+                >
+                  <SearchMenuItem name="Admins">
+                    <ListItemButton
+                      sx={{
+                        minHeight: 48,
+                        justifyContent: open ? "initial" : "center",
+                        px: 2.5,
+                        pl: 4,
+                      }}
+                      component={Link}
+                      to="/admin-login-data"
+                    >
+                      <ListItemIcon
+                        sx={{
+                          minWidth: 0,
+                          mr: open ? 3 : "auto",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <SettingsIcon fontSize="small" />
+                      </ListItemIcon>
+                      <ListItemText
+                        primary={"Admins"}
+                        sx={{ opacity: open ? 1 : 0 }}
+                        primaryTypographyProps={primaryTypographyProps}
+                      />
+                    </ListItemButton>
+                  </SearchMenuItem>
+                </IsAuthentication>
+
+                <IsAuthentication permission={Enum_Permission.LoggingList}>
+                  <SearchMenuItem name="Logging">
+                    <ListItemButton
+                      sx={{
+                        minHeight: 48,
+                        justifyContent: open ? "initial" : "center",
+                        px: 2.5,
+                        pl: 4,
+                      }}
+                      component={Link}
+                      to="/logging"
+                    >
+                      <ListItemIcon
+                        sx={{
+                          minWidth: 0,
+                          mr: open ? 3 : "auto",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <SettingsIcon fontSize="small" />
+                      </ListItemIcon>
+                      <ListItemText
+                        primary={"Logging"}
+                        sx={{ opacity: open ? 1 : 0 }}
+                        primaryTypographyProps={primaryTypographyProps}
+                      />
+                    </ListItemButton>
+                  </SearchMenuItem>
+                </IsAuthentication>
+              </List>
+            </Collapse>
+          </IsAuthentication>
         </List>
       </Drawer>
       <Box component="main" sx={{ flexGrow: 1, p: 3 }}>

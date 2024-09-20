@@ -3,6 +3,7 @@ using LQ = System.Linq.Expressions;
 public interface IDatabaseContext<TCollection>
     where TCollection : class, ITableEntities
 {
+    IQueryable<TCollection> Queryable();
     Task<bool> InsertAsync(TCollection entity);
     Task<bool> InsertManyAsync(List<TCollection> entity);
     //var result = await _context.UpdateAsync(x => x.Id == pollId, Builders<Polls>.Update.Set(x => x.IsPublish, true));
